@@ -228,6 +228,8 @@ defmodule Exshape.Dbf do
     |> Stream.run
     ```
 
+    Options:
+    * `raise_on_parse_error: bool` - whether to throw an exception if a shape or dbf file is not completely consumed without error (default false)
   """
   def read(byte_stream, opts \\ []) do
     raise_on_parse_error = Keyword.get(opts, :raise_on_parse_error, false)

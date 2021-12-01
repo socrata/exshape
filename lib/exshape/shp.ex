@@ -5,7 +5,7 @@ defmodule Exshape.Shp do
   alias Exshape.Errors
 
   defmodule State do
-    @enforce_keys [:nest_polygon, :error_on_nan_points]
+    @enforce_keys [:nest_polygon, :raise_on_nan_points]
     defstruct mode: :header,
       shape_type: nil,
       emit: [],
@@ -15,7 +15,7 @@ defmodule Exshape.Shp do
       measures: [],
       z_values: [],
       nest_polygon: nil,
-      error_on_nan_points: nil
+      raise_on_nan_points: nil
   end
 
   @magic_nodata_num :math.pow(10, 38) * -1
@@ -376,7 +376,7 @@ defmodule Exshape.Shp do
     |> emit(%Point{x: x, y: y})
     |> do_read(rest)
   end
-  defp do_read(%State{mode: {:record, _, _}, shape_type: :point, error_on_nan_points: e} = s, <<
+  defp do_read(%State{mode: {:record, _, _}, shape_type: :point, raise_on_nan_points: e} = s, <<
     1::little-integer-size(32),
     _::binary-size(16),
     rest::binary
@@ -775,15 +775,20 @@ defmodule Exshape.Shp do
       |> Exshape.Shp.read
       |> Stream.run
     ```
+
+  Options:
+    * `raise_on_parse_error: bool` - whether to throw an exception if a shape or dbf file is not completely consumed without error (default false)
+    * `raise_on_nan_points: bool` - whether to throw an exception if a point with NaN coordinates is encountered (default false)
+    * `native: bool` - whether to use native code for nesting polygon holes (default true)
   """
   def read(byte_stream, opts \\ []) do
     native = Keyword.get(opts, :native, true)
-    error_on_nan_points = Keyword.get(opts, :error_on_nan_points, false)
+    raise_on_nan_points = Keyword.get(opts, :raise_on_nan_points, false)
     raise_on_parse_error = Keyword.get(opts, :raise_on_parse_error, false)
 
     state = %State{
       nest_polygon: if(native, do: &native_nest_polygon/1, else: &beam_nest_polygon/1),
-      error_on_nan_points: error_on_nan_points
+      raise_on_nan_points: raise_on_nan_points
     }
     Stream.transform(byte_stream, {<<>>, state}, fn bin, {buf, state} ->
       case do_read(state, buf <> bin) do
