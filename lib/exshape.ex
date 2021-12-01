@@ -4,14 +4,33 @@ defmodule Exshape do
     archives. If you have a stream of bytes that you want to parse
     directly, use the Shp or Dbf modules to parse.
   """
-  alias Exshape.{Dbf, Shp}
+  alias Exshape.{Dbf, Shp, Errors}
 
   defp open_file(c, size), do: File.stream!(c, [], size)
 
   defp zip(nil, nil, _), do: []
-  defp zip(nil, d, _), do: Dbf.read(d)
+  defp zip(nil, d, opts), do: Dbf.read(d, opts)
   defp zip(s, nil, opts), do: Shp.read(s, opts)
-  defp zip(s, d, opts), do: Stream.zip(Shp.read(s, opts), Dbf.read(d))
+  defp zip(s, d, opts) do
+    if Keyword.get(opts, :raise_on_record_count_mismatch, false) do
+      zip_exact(Shp.read(s, opts), Dbf.read(d, opts))
+    else
+      Stream.zip(Shp.read(s, opts), Dbf.read(d, opts))
+    end
+  end
+
+  defp zip_exact(s1, s2) do
+    eof = make_ref()
+    Stream.zip(
+      Stream.concat(s1, Stream.repeatedly(fn -> eof end)),
+      Stream.concat(s2, Stream.repeatedly(fn -> eof end))
+    ) |> Stream.transform(nil, fn
+      {^eof, ^eof}, _ -> {:halt, nil}
+      {^eof, _}, _ -> raise %Errors.MismatchedRecordCounts{}
+      {_, ^eof}, _ -> raise %Errors.MismatchedRecordCounts{}
+      pair, _ -> {[pair], nil}
+    end)
+  end
 
   defp unzip!(path, cwd, false), do: :zip.extract(to_charlist(path), cwd: cwd)
   defp unzip!(path, cwd, true) do

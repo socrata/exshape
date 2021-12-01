@@ -1,5 +1,6 @@
 defmodule Exshape.Dbf do
-  alias Exshape.TwelveFiftyTwo
+  alias Exshape.{TwelveFiftyTwo, Errors}
+
   defmodule Header do
     defstruct [:last_updated,
       :record_count,
@@ -228,11 +229,17 @@ defmodule Exshape.Dbf do
     ```
 
   """
-  def read(byte_stream) do
+  def read(byte_stream, opts \\ []) do
+    raise_on_parse_error = Keyword.get(opts, :raise_on_parse_error, false)
+
     Stream.transform(byte_stream, {<<>>, %State{}}, fn bin, {buf, state} ->
       case do_read(state, buf <> bin) do
-        {_, %State{mode: :done}} = s ->
-          {:halt, s}
+        {buf, %State{mode: :done}} = s ->
+          if raise_on_parse_error && buf != "" do
+            raise %Errors.DbfParseError{}
+          else
+            {:halt, s}
+          end
         {buf, %State{emit: emit} = s} ->
           {Enum.reverse(emit), {buf, %{s | emit: []}}}
       end
