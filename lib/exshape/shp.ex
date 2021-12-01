@@ -2,8 +2,10 @@ defmodule Exshape.Shp do
   require Rustler
   use Rustler, otp_app: :exshape, crate: :exshape_shape, mode: :release
 
+  alias Exshape.Errors
+
   defmodule State do
-    @enforce_keys [:nest_polygon]
+    @enforce_keys [:nest_polygon, :raise_on_nan_points]
     defstruct mode: :header,
       shape_type: nil,
       emit: [],
@@ -12,7 +14,8 @@ defmodule Exshape.Shp do
       part_index: 0,
       measures: [],
       z_values: [],
-      nest_polygon: nil
+      nest_polygon: nil,
+      raise_on_nan_points: nil
   end
 
   @magic_nodata_num :math.pow(10, 38) * -1
@@ -371,6 +374,15 @@ defmodule Exshape.Shp do
   >>) do
     s
     |> emit(%Point{x: x, y: y})
+    |> do_read(rest)
+  end
+  defp do_read(%State{mode: {:record, _, _}, shape_type: :point, raise_on_nan_points: e} = s, <<
+    1::little-integer-size(32),
+    _::binary-size(16),
+    rest::binary
+  >>) when e in [false, nil] do
+    s
+    |> emit(nil)
     |> do_read(rest)
   end
 
@@ -763,17 +775,31 @@ defmodule Exshape.Shp do
       |> Exshape.Shp.read
       |> Stream.run
     ```
+
+  Options:
+    * `raise_on_parse_error: bool` - whether to throw an exception if a shape or dbf file is not completely consumed without error (default false)
+    * `raise_on_nan_points: bool` - whether to throw an exception if a point with NaN coordinates is encountered (default false)
+    * `native: bool` - whether to use native code for nesting polygon holes (default true)
   """
   def read(byte_stream, opts \\ []) do
     native = Keyword.get(opts, :native, true)
+    raise_on_nan_points = Keyword.get(opts, :raise_on_nan_points, false)
+    raise_on_parse_error = Keyword.get(opts, :raise_on_parse_error, false)
 
     state = %State{
-      nest_polygon: if(native, do: &native_nest_polygon/1, else: &beam_nest_polygon/1)
+      nest_polygon: if(native, do: &native_nest_polygon/1, else: &beam_nest_polygon/1),
+      raise_on_nan_points: raise_on_nan_points
     }
     Stream.transform(byte_stream, {<<>>, state}, fn bin, {buf, state} ->
       case do_read(state, buf <> bin) do
-        {_,   %State{mode: :done}} = s -> {:halt, s}
-        {buf, %State{emit: emit} = s} -> {Enum.reverse(emit), {buf, %{s | emit: []}}}
+        {buf, %State{mode: :done}} = s ->
+          if raise_on_parse_error && buf != "" do
+            raise %Errors.ShpParseError{}
+          else
+            {:halt, s}
+          end
+        {buf, %State{emit: emit} = s} ->
+          {Enum.reverse(emit), {buf, %{s | emit: []}}}
       end
     end)
   end
