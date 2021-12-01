@@ -373,6 +373,15 @@ defmodule Exshape.Shp do
     |> emit(%Point{x: x, y: y})
     |> do_read(rest)
   end
+  defp do_read(%State{mode: {:record, _, _}, shape_type: :point} = s, <<
+    1::little-integer-size(32),
+    _::binary-size(16),
+    rest::binary
+  >>) do
+    s
+    |> emit(nil)
+    |> do_read(rest)
+  end
 
   ##
   # Multipoints
