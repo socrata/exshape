@@ -246,9 +246,9 @@ defmodule Exshape.Dbf do
         {buf, %State{mode: :done} = st} = s ->
           cond do
             raise_on_record_count_mismatch && record_count_mismatch(st) ->
-              raise %Errors.DbfRecordCountMismatch{expected: st.header.record_count, got: st.records}
+              raise Errors.DbfRecordCountMismatch, expected: st.header.record_count, got: st.records
             raise_on_parse_error && buf != "" ->
-              raise %Errors.DbfParseError{}
+              raise Errors.DbfParseError
             true ->
               {:halt, s}
           end

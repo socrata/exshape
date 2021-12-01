@@ -26,8 +26,8 @@ defmodule Exshape do
       Stream.concat(s2, Stream.repeatedly(fn -> eof end))
     ) |> Stream.transform(nil, fn
       {^eof, ^eof}, _ -> {:halt, nil}
-      {^eof, _}, _ -> raise %Errors.MismatchedRecordCounts{}
-      {_, ^eof}, _ -> raise %Errors.MismatchedRecordCounts{}
+      {^eof, _}, _ -> raise Errors.MismatchedRecordCounts
+      {_, ^eof}, _ -> raise Errors.MismatchedRecordCounts
       pair, _ -> {[pair], nil}
     end)
   end

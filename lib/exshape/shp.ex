@@ -794,7 +794,7 @@ defmodule Exshape.Shp do
       case do_read(state, buf <> bin) do
         {buf, %State{mode: :done}} = s ->
           if raise_on_parse_error && buf != "" do
-            raise %Errors.ShpParseError{}
+            raise Errors.ShpParseError
           else
             {:halt, s}
           end

@@ -1,18 +1,17 @@
 defmodule Exshape.Errors do
   defmodule MismatchedRecordCounts do
-    defstruct []
+    defexception message: "Mismatched DBF/SHP record counts"
   end
 
   defmodule DbfParseError do
-    defstruct []
+    defexception message: "DBF parse error"
   end
 
   defmodule DbfRecordCountMismatch do
-    @enforce_keys [:expected, :got]
-    defstruct @enforce_keys
+    defexception [:expected, :got, {:message, "DBF record count mismatch"}]
   end
 
   defmodule ShpParseError do
-    defstruct []
+    defexception message: "SHP parse error"
   end
 end
