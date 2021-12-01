@@ -80,7 +80,7 @@ defmodule Exshape do
     Options:
     * `working_dir: path` - path to a directory to use as temp space (default: a random file in /tmp)
     * `read_size: int` - chunk size to use while reading files (default: 1MiB)
-    * `raise_on_record_count_mismatch: bool` - whether to throw an exception if the shape and dbf files for a layer have different record counts (default false)
+    * `raise_on_record_count_mismatch: bool` - whether to throw an exception if the shape and dbf files for a layer have different record counts, or if a dbf file claims to contain a different number of records than it actually does (default false)
     * `raise_on_parse_error: bool` - whether to throw an exception if a shape or dbf file is not completely consumed without error (default false)
     * `raise_on_nan_points: bool` - whether to throw an exception if a point with NaN coordinates is encountered (default false)
     * `native: bool` - whether to use native code for nesting polygon holes (default true)

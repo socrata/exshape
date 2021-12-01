@@ -7,6 +7,11 @@ defmodule Exshape.Errors do
     defstruct []
   end
 
+  defmodule DbfRecordCountMismatch do
+    @enforce_keys [:expected, :got]
+    defstruct @enforce_keys
+  end
+
   defmodule ShpParseError do
     defstruct []
   end

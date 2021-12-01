@@ -17,13 +17,14 @@ defmodule Exshape.Dbf do
     defstruct mode: :header,
       emit: [],
       item: [],
-      header: %Header{}
+      header: %Header{},
+      records: 0
   end
 
   defp mode(s, m), do: %{s | mode: m}
   defp header(s, u), do: %{s | header: struct(s.header, u)}
   defp emit(s, %Header{} = header), do: %{s | emit: [%{header | columns: Enum.reverse(header.columns)} | s.emit], item: []}
-  defp emit(s, row), do: %{s | emit: [row | s.emit], item: []}
+  defp emit(s, row), do: %{s | emit: [row | s.emit], item: [], records: s.records + 1}
   defp add_column(s, c), do: %{s | header: %{s.header | columns: [c | s.header.columns]}}
 
 
@@ -216,6 +217,10 @@ defmodule Exshape.Dbf do
 
   defp do_read(%State{} = s, <<rest::binary>>), do: {rest, s}
 
+  defp record_count_mismatch(%State{header: %Header{record_count: rc1}, records: rc2}) do
+    rc1 != rc2
+  end
+
   @doc """
     Read a DBF from a byte stream
 
@@ -229,18 +234,23 @@ defmodule Exshape.Dbf do
     ```
 
     Options:
-    * `raise_on_parse_error: bool` - whether to throw an exception if a shape or dbf file is not completely consumed without error (default false)
+    * `raise_on_parse_error: bool` - whether to throw an exception if the file is not completely consumed without error (default false)
+    * `raise_on_record_count_mismatch: bool` - whether to throw an exception if the file claims to contain a different number of records than it actually does (default false)
   """
   def read(byte_stream, opts \\ []) do
     raise_on_parse_error = Keyword.get(opts, :raise_on_parse_error, false)
+    raise_on_record_count_mismatch = Keyword.get(opts, :raise_on_record_count_mismatch, false)
 
     Stream.transform(byte_stream, {<<>>, %State{}}, fn bin, {buf, state} ->
       case do_read(state, buf <> bin) do
-        {buf, %State{mode: :done}} = s ->
-          if raise_on_parse_error && buf != "" do
-            raise %Errors.DbfParseError{}
-          else
-            {:halt, s}
+        {buf, %State{mode: :done} = st} = s ->
+          cond do
+            raise_on_record_count_mismatch && record_count_mismatch(st) ->
+              raise %Errors.DbfRecordCountMismatch{expected: st.header.record_count, got: st.records}
+            raise_on_parse_error && buf != "" ->
+              raise %Errors.DbfParseError{}
+            true ->
+              {:halt, s}
           end
         {buf, %State{emit: emit} = s} ->
           {Enum.reverse(emit), {buf, %{s | emit: []}}}
