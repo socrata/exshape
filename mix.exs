@@ -50,7 +50,7 @@ defmodule Exshape.Mixfile do
       {:elixir_uuid, "~> 1.2"},
       {:ex_doc, ">= 0.0.0", only: :dev},
       {:poison, "~> 3.1", only: :test},
-      {:rustler, "~> 0.22.0"},
+      {:rustler, "~> 0.25.0"},
     ]
   end
 end
