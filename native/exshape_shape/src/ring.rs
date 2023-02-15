@@ -140,7 +140,17 @@ impl <'a> Ring<'a> {
 fn band_for(y_min: f64, y_max: f64, y: f64, bands: usize) -> usize {
     let range = y_max - y_min;
     let frac = (y - y_min) / range;
-    (bands as f64 * frac).floor() as usize
+
+    let result = (bands as f64 * frac).floor() as usize;
+
+    if result == bands {
+        // Precision wasn't enough to preserve the distinction between
+        // y and y_max across the computation, so we need to nudge it
+        // down.
+        bands - 1
+    } else {
+        result
+    }
 }
 
 fn slice(points: &Vec<Point>) -> Slices {
