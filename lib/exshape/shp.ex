@@ -100,7 +100,7 @@ defmodule Exshape.Shp do
     def shape_type_to_struct(unquote(t)), do: struct!(unquote(s))
   end)
 
-  defmacrop dbg(_msg) do
+  defmacrop trace(_msg) do
     quote do
       # IO.puts(unquote(msg))
       :ok
@@ -339,7 +339,7 @@ defmodule Exshape.Shp do
     mmax::little-float-size(64),
     rest::binary
   >>) do
-    dbg("header")
+    trace("header")
     box = %Bbox{
       xmin: xmin,
       xmax: xmax,
@@ -363,7 +363,7 @@ defmodule Exshape.Shp do
     content_length::big-integer-size(32),
     rest::binary
   >>) do
-    dbg("record_header #{record_number} #{content_length}")
+    trace("record_header #{record_number} #{content_length}")
     s
     |> mode({:record, record_number}, content_length)
     |> do_read(rest)
@@ -373,7 +373,7 @@ defmodule Exshape.Shp do
     0::little-integer-size(32),
     rest::binary
   >> = bits) do
-    dbg("record/nil #{byte_size(bits) - byte_size(rest)}")
+    trace("record/nil #{byte_size(bits) - byte_size(rest)}")
     s
     |> take(bits, rest)
     |> emit(nil)
@@ -390,7 +390,7 @@ defmodule Exshape.Shp do
     y::little-float-size(64),
     rest::binary
   >> = bits) do
-    dbg("record/point #{byte_size(bits) - byte_size(rest)}")
+    trace("record/point #{byte_size(bits) - byte_size(rest)}")
     s
     |> take(bits, rest)
     |> emit(%Point{x: x, y: y})
@@ -401,7 +401,7 @@ defmodule Exshape.Shp do
     _::binary-size(16),
     rest::binary
   >> = bits) when e in [false, nil] do
-    dbg("record/nan point #{byte_size(bits) - byte_size(rest)}")
+    trace("record/nan point #{byte_size(bits) - byte_size(rest)}")
     s
     |> take(bits, rest)
     |> emit(nil)
@@ -417,7 +417,7 @@ defmodule Exshape.Shp do
     num_points::little-integer-size(32),
     rest::binary
   >> = bits) do
-    dbg("record/multipoint #{byte_size(bits) - byte_size(rest)}")
+    trace("record/multipoint #{byte_size(bits) - byte_size(rest)}")
     s
     |> take(bits, rest)
     |> repeatedly(num_points)
@@ -427,7 +427,7 @@ defmodule Exshape.Shp do
   end
 
   defp do_read(%State{mode: :multipoint, to_read: 0} = s, rest) do
-    dbg("multipoint complete")
+    trace("multipoint complete")
     s
     |> emit_item
     |> do_read(rest)
@@ -438,7 +438,7 @@ defmodule Exshape.Shp do
     y::little-float-size(64),
     rest::binary
   >> = bits) do
-    dbg("multipoint/multipoint #{byte_size(bits) - byte_size(rest)}")
+    trace("multipoint/multipoint #{byte_size(bits) - byte_size(rest)}")
     s
     |> take(bits, rest)
     |> prepend(%Point{x: x, y: y}, :points)
@@ -456,7 +456,7 @@ defmodule Exshape.Shp do
     num_points::little-integer-size(32),
     rest::binary
   >> = bits) do
-    dbg("record/polyline #{byte_size(bits) - byte_size(rest)}")
+    trace("record/polyline #{byte_size(bits) - byte_size(rest)}")
     s
     |> take(bits, rest)
     |> repeatedly(num_parts)
@@ -466,7 +466,7 @@ defmodule Exshape.Shp do
   end
 
   defp do_read(%State{mode: :polyline, to_read: 0} = s, rest) do
-    dbg("polyline complete")
+    trace("polyline complete")
     s
     |> emit(s.item)
     |> do_read(rest)
@@ -477,7 +477,7 @@ defmodule Exshape.Shp do
     y::little-float-size(64),
     rest::binary
   >> = bits) do
-    dbg("polyline/polyline #{byte_size(bits) - byte_size(rest)}")
+    trace("polyline/polyline #{byte_size(bits) - byte_size(rest)}")
     s
     |> take(bits, rest)
     |> prepend(%Point{x: x, y: y}, :points)
@@ -495,7 +495,7 @@ defmodule Exshape.Shp do
     num_points::little-integer-size(32),
     rest::binary
   >> = bits) do
-    dbg("record/polygon #{byte_size(bits) - byte_size(rest)}")
+    trace("record/polygon #{byte_size(bits) - byte_size(rest)}")
     s
     |> take(bits, rest)
     |> repeatedly(num_parts)
@@ -505,7 +505,7 @@ defmodule Exshape.Shp do
   end
 
   defp do_read(%State{mode: :polygon, to_read: 0} = s, rest) do
-    dbg("polygon complete")
+    trace("polygon complete")
     s
     |> emit(s.item)
     |> do_read(rest)
@@ -516,7 +516,7 @@ defmodule Exshape.Shp do
     y::little-float-size(64),
     rest::binary
   >> = bits) do
-    dbg("polygon/polygon #{byte_size(bits) - byte_size(rest)}")
+    trace("polygon/polygon #{byte_size(bits) - byte_size(rest)}")
     s
     |> take(bits, rest)
     |> prepend(%Point{x: x, y: y}, :points)
@@ -534,7 +534,7 @@ defmodule Exshape.Shp do
     m::little-float-size(64),
     rest::binary
   >> = bits) do
-    dbg("record/pointm #{byte_size(bits) - byte_size(rest)}")
+    trace("record/pointm #{byte_size(bits) - byte_size(rest)}")
     s
     |> take(bits, rest)
     |> emit(%PointM{x: x, y: y, m: m})
@@ -552,7 +552,7 @@ defmodule Exshape.Shp do
     m::little-float-size(64),
     rest::binary
   >> = bits) do
-    dbg("record/pointz #{byte_size(bits) - byte_size(rest)}")
+    trace("record/pointz #{byte_size(bits) - byte_size(rest)}")
     s
     |> take(bits, rest)
     |> emit(%PointZ{x: x, y: y, m: nodata_to_nil(m), z: z})
@@ -568,7 +568,7 @@ defmodule Exshape.Shp do
     num_points::little-integer-size(32),
     rest::binary
   >> = bits) do
-    dbg("record/multipointm #{byte_size(bits) - byte_size(rest)}")
+    trace("record/multipointm #{byte_size(bits) - byte_size(rest)}")
     s
     |> take(bits, rest)
     |> repeatedly(num_points)
@@ -579,7 +579,7 @@ defmodule Exshape.Shp do
 
 
   defp do_read(%State{mode: :multipointm, to_read: 0} = s, rest) do
-    dbg("multipointm complete")
+    trace("multipointm complete")
     s
     |> mode(:m)
     |> do_read(rest)
@@ -590,7 +590,7 @@ defmodule Exshape.Shp do
     y::little-float-size(64),
     rest::binary
   >> = bits) do
-    dbg("multipointm/multipointm #{byte_size(bits) - byte_size(rest)}")
+    trace("multipointm/multipointm #{byte_size(bits) - byte_size(rest)}")
     s
     |> take(bits, rest)
     |> prepend(%PointM{x: x, y: y}, :points)
@@ -607,7 +607,7 @@ defmodule Exshape.Shp do
     num_points::little-integer-size(32),
     rest::binary
   >> = bits) do
-    dbg("record/multipointz #{byte_size(bits) - byte_size(rest)}")
+    trace("record/multipointz #{byte_size(bits) - byte_size(rest)}")
     s
     |> take(bits, rest)
     |> repeatedly(num_points)
@@ -618,7 +618,7 @@ defmodule Exshape.Shp do
 
 
   defp do_read(%State{mode: :multipointz, to_read: 0} = s, rest) do
-    dbg("multipointz complete")
+    trace("multipointz complete")
     s
     |> mode(:z)
     |> do_read(rest)
@@ -629,7 +629,7 @@ defmodule Exshape.Shp do
     y::little-float-size(64),
     rest::binary
   >> = bits) do
-    dbg("multipointz/multipointz #{byte_size(bits) - byte_size(rest)}")
+    trace("multipointz/multipointz #{byte_size(bits) - byte_size(rest)}")
     s
     |> take(bits, rest)
     |> prepend(%PointZ{x: x, y: y}, :points)
@@ -653,7 +653,7 @@ defmodule Exshape.Shp do
     rest::binary
   >> = bits) when st in @poly_m do
 
-    dbg("record/#{inspect st} #{byte_size(bits) - byte_size(rest)}")
+    trace("record/#{inspect st} #{byte_size(bits) - byte_size(rest)}")
     t = Map.get(@poly_m_t, st)
     item = struct(t, %{bbox: extract_bbox(bbox)})
 
@@ -666,7 +666,7 @@ defmodule Exshape.Shp do
   end
 
   defp do_read(%State{mode: mode, to_read: 0} = s, rest) when mode in @poly_m do
-    dbg("#{inspect mode} complete")
+    trace("#{inspect mode} complete")
     s
     |> mode(:m)
     |> do_read(rest)
@@ -677,7 +677,7 @@ defmodule Exshape.Shp do
     y::little-float-size(64),
     rest::binary
   >> = bits) when st in @poly_m do
-    dbg("#{inspect st}/#{inspect st} #{byte_size(bits) - byte_size(rest)}")
+    trace("#{inspect st}/#{inspect st} #{byte_size(bits) - byte_size(rest)}")
     s
     |> take(bits, rest)
     |> prepend(%PointM{x: x, y: y}, :points)
@@ -700,7 +700,7 @@ defmodule Exshape.Shp do
     num_points::little-integer-size(32),
     rest::binary
   >> = bits) when st in @poly_z do
-    dbg("record/#{inspect st}/#{num_parts}/#{num_points} #{byte_size(bits) - byte_size(rest)}")
+    trace("record/#{inspect st}/#{num_parts}/#{num_points} #{byte_size(bits) - byte_size(rest)}")
 
     t = Map.get(@poly_z_t, st)
     item = struct(t, %{bbox: extract_bbox(bbox)})
@@ -714,7 +714,7 @@ defmodule Exshape.Shp do
   end
 
   defp do_read(%State{mode: mode, to_read: 0} = s, rest) when mode in @poly_z do
-    dbg("#{inspect mode} complete")
+    trace("#{inspect mode} complete")
 
     s
     |> mode(:z)
@@ -726,7 +726,7 @@ defmodule Exshape.Shp do
     y::little-float-size(64),
     rest::binary
   >> = bits) when st in @poly_z do
-    dbg("#{inspect st}/#{inspect st} #{byte_size(bits) - byte_size(rest)}")
+    trace("#{inspect st}/#{inspect st} #{byte_size(bits) - byte_size(rest)}")
 
     s
     |> take(bits, rest)
@@ -739,7 +739,7 @@ defmodule Exshape.Shp do
   # Parts
   #
   defp do_read(%State{mode: {:parts, {next_mode, to_read}}, to_read: 0} = s, rest) do
-    dbg("parts/#{inspect next_mode}")
+    trace("parts/#{inspect next_mode}")
 
     s
     |> item(reverse(s.item, :parts))
@@ -751,7 +751,7 @@ defmodule Exshape.Shp do
     part::little-integer-size(32),
     rest::binary
   >> = bits) do
-    dbg("parts/#{part} #{byte_size(bits) - byte_size(rest)}")
+    trace("parts/#{part} #{byte_size(bits) - byte_size(rest)}")
 
     s
     |> take(bits, rest)
@@ -767,7 +767,7 @@ defmodule Exshape.Shp do
     bbox_measures::binary-size(16),
     rest::binary
   >> = bits) when available(s,bits, rest) do
-    dbg("measures #{byte_size(bits) - byte_size(rest)}")
+    trace("measures #{byte_size(bits) - byte_size(rest)}")
 
     num_points = length(s.item.points)
     bbox = update_bbox_measures(s.item.bbox, bbox_measures)
@@ -781,7 +781,7 @@ defmodule Exshape.Shp do
   end
 
   defp do_read(%State{mode: :m, remaining: 0} = s, rest) do
-    dbg("No measures!")
+    trace("No measures!")
     s
     |> mode(:measures)
     |> repeatedly(0)
@@ -789,7 +789,7 @@ defmodule Exshape.Shp do
   end
 
   defp do_read(%State{mode: :measures, to_read: 0} = s, rest) do
-    dbg("measures complete")
+    trace("measures complete")
 
     s
     |> emit(s.item)
@@ -800,7 +800,7 @@ defmodule Exshape.Shp do
     m::little-float-size(64),
     rest::binary
   >> = bits) do
-    dbg("measures/measures #{byte_size(bits) - byte_size(rest)}")
+    trace("measures/measures #{byte_size(bits) - byte_size(rest)}")
 
     s
     |> take(bits, rest)
@@ -817,7 +817,7 @@ defmodule Exshape.Shp do
     z_range::binary-size(16),
     rest::binary
   >> = bits) do
-    dbg("z #{byte_size(bits) - byte_size(rest)}")
+    trace("z #{byte_size(bits) - byte_size(rest)}")
 
     num_points = length(s.item.points)
     bbox = update_bbox_zrange(s.item.bbox, z_range)
@@ -830,7 +830,7 @@ defmodule Exshape.Shp do
   end
 
   defp do_read(%State{mode: :z_values, to_read: 0} = s, rest) do
-    dbg("z complete")
+    trace("z complete")
 
     num_points = length(s.item.points)
 
@@ -844,7 +844,7 @@ defmodule Exshape.Shp do
     z::little-float-size(64),
     rest::binary
   >> = bits) do
-    dbg("z/z_values #{byte_size(bits) - byte_size(rest)}")
+    trace("z/z_values #{byte_size(bits) - byte_size(rest)}")
 
     s
     |> take(bits, rest)
@@ -856,7 +856,7 @@ defmodule Exshape.Shp do
 
 
   defp do_read(%State{} = s, <<rest::binary>>) do
-    dbg("not complete #{inspect s.remaining}")
+    trace("not complete #{inspect s.remaining}")
 
     {rest, s}
   end
