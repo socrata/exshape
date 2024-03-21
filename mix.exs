@@ -49,7 +49,7 @@ defmodule Exshape.Mixfile do
     [
       {:ex_doc, ">= 0.0.0", only: :dev},
       {:poison, "~> 3.1", only: :test},
-      {:rustler, "~> 0.30.0"},
+      {:rustler, "~> 0.32.1"},
     ]
   end
 end

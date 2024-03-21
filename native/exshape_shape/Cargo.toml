@@ -10,8 +10,7 @@ path = "src/lib.rs"
 crate-type = ["dylib"]
 
 [dependencies]
-rustler = "0.30.0"
-rustler_codegen = "0.30.0"
+rustler = "0.32.1"
 itertools = "0.12.1"
 derivative = "2.2.0"
 float_extras = "0.1.6"
