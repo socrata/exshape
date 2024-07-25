@@ -7,7 +7,7 @@ mod atoms {
     rustler::atoms! { x, y }
 }
 
-rustler::init!("Elixir.Exshape.Shp", [native_nest_polygon_impl]);
+rustler::init!("Elixir.Exshape.Shp");
 
 mod point;
 mod lineseg;

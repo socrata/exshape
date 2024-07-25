@@ -1,6 +1,6 @@
 defmodule Exshape.Shp do
   require Rustler
-  use Rustler, otp_app: :exshape, crate: :exshape_shape, mode: :release
+  use Rustler, otp_app: :exshape, crate: :exshape_shape
 
   alias Exshape.Errors
 
