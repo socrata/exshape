@@ -33,7 +33,7 @@ defmodule Exshape.Mixfile do
   # Type "mix help compile.app" for more information
   def application do
     # Specify extra applications you'll use from Erlang/Elixir
-    [extra_applications: [:crypto, :logger, :rustler]]
+    [extra_applications: [:crypto, :logger]]
   end
 
   # Dependencies can be Hex packages:
@@ -49,7 +49,7 @@ defmodule Exshape.Mixfile do
     [
       {:ex_doc, ">= 0.0.0", only: :dev},
       {:poison, "~> 3.1", only: :test},
-      {:rustler, "~> 0.33.0"},
+      {:rustler, "~> 0.34.0", runtime: false},
     ]
   end
 end
