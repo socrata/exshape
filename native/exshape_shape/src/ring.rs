@@ -17,6 +17,14 @@ struct Slices {
 
 #[derive(Derivative)]
 #[derivative(Debug)]
+pub struct ElixirRing<'a> {
+    #[derivative(Debug = "ignore")]
+    term: Term<'a>,
+    points: Vec<Point>,
+}
+
+#[derive(Derivative)]
+#[derivative(Debug)]
 pub struct Ring<'a> {
     #[derivative(Debug = "ignore")]
     term: Term<'a>,
@@ -36,7 +44,7 @@ fn decode_floatish<'a>(term: Term<'a>) -> NifResult<f64> {
     })
 }
 
-impl <'a> Decoder<'a> for Ring<'a> {
+impl <'a> Decoder<'a> for ElixirRing<'a> {
     fn decode(term: Term<'a>) -> NifResult<Self> {
         // could define a Decoder for Point and just use Vec's Decoder
         // impl, but this way we can look up the atoms just once per
@@ -56,18 +64,36 @@ impl <'a> Decoder<'a> for Ring<'a> {
         }
 
         Ok(
-            Ring {
+            Self {
                 term,
-                points,
-                slices: RefCell::new(None)
+                points
             }
         )
     }
 }
 
-impl <'a> Encoder for Ring<'a> {
+impl <'a> Encoder for ElixirRing<'a> {
     fn encode<'b>(&self, env: Env<'b>) -> Term<'b> {
         self.term.in_env(env)
+    }
+}
+
+impl <'a> From<ElixirRing<'a>> for Ring<'a> {
+    fn from(value: ElixirRing<'a>) -> Self {
+        Self {
+            term: value.term,
+            points: value.points,
+            slices: RefCell::new(None)
+        }
+    }
+}
+
+impl <'a> From<Ring<'a>> for ElixirRing<'a> {
+    fn from(value: Ring<'a>) -> Self {
+        Self {
+            term: value.term,
+            points: value.points
+        }
     }
 }
 
