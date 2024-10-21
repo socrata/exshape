@@ -14,8 +14,8 @@ mod lineseg;
 mod ring;
 mod poly;
 
-use ring::Ring;
-use poly::Poly;
+use ring::{ElixirRing, Ring};
+use poly::{ElixirPoly, Poly};
 use point::Point;
 
 struct Yes<T>(T);
@@ -26,8 +26,9 @@ impl <T: Encoder> Encoder for Yes<T> {
 }
 
 #[rustler::nif(schedule = "DirtyCpu")]
-fn native_nest_polygon_impl<'a>(rings: Vec<Ring<'a>>) -> Yes<Vec<Poly<'a>>> {
+fn native_nest_polygon_impl(rings: Vec<ElixirRing<'_>>) -> Yes<Vec<ElixirPoly<'_>>> {
     let (mut polys, holes) = rings.into_iter().partition_map(|ring| {
+        let ring = Ring::from(ring);
         if ring.is_clockwise() {
             Either::Left(ring.into())
         } else {
@@ -36,7 +37,7 @@ fn native_nest_polygon_impl<'a>(rings: Vec<Ring<'a>>) -> Yes<Vec<Poly<'a>>> {
     });
     nest_holes(&mut polys, holes);
 
-    Yes(polys)
+    Yes(polys.into_iter().map(ElixirPoly::from).collect())
 }
 
 fn nest_holes<'a>(polys: &mut Vec<Poly<'a>>, holes: Vec<Ring<'a>>) {
