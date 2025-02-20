@@ -2,7 +2,7 @@
 name = "exshape_shape"
 version = "0.1.0"
 authors = []
-edition = "2018"
+edition = "2024"
 
 [lib]
 name = "exshape_shape"
@@ -10,7 +10,7 @@ path = "src/lib.rs"
 crate-type = ["dylib"]
 
 [dependencies]
-rustler = "0.35.1"
+rustler = "0.36.1"
 itertools = "0.14.0"
 derivative = "2.2.0"
 float_extras = "0.1.6"
