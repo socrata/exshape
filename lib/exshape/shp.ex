@@ -245,6 +245,8 @@ defmodule Exshape.Shp do
     r
   end
   defp native_nest_polygon_impl(_p), do: throw :nif_not_loaded
+  def unzip_table(_p), do: throw :nif_not_loaded
+  def unzip_files(_p, _f), do: throw :nif_not_loaded
 
   def beam_nest_polygon(p) do
     {polys, holes} = unflatten_parts(p) |> Enum.split_with(&is_clockwise?/1)

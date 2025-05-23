@@ -32,16 +32,9 @@ defmodule Exshape do
     end)
   end
 
-  defp unzip!(path, cwd, false), do: :zip.extract(to_charlist(path), cwd: cwd)
-  defp unzip!(path, cwd, true) do
-    {_, 0} = System.cmd("unzip", [path, "-d", to_string(cwd)])
-  end
-
-  def keep_file?({:zip_file, charlist, _, _, _, _}) do
-    filename = :binary.list_to_bin(charlist)
+  def keep_file?(filename) do
     not String.starts_with?(filename, "__MACOSX") and not String.starts_with?(filename, ".")
   end
-  def keep_file?(_), do: false
 
   defmodule Filesystem do
     @moduledoc """
@@ -91,17 +84,17 @@ defmodule Exshape do
   @spec from_zip(String.t) :: [layer]
   def from_zip(path, opts \\ []) do
 
-    cwd = Keyword.get(opts, :working_dir, '/tmp/exshape_#{random_string()}')
+    cwd = Keyword.get(opts, :working_dir, "/tmp/exshape_#{random_string()}")
     size = Keyword.get(opts, :read_size, 1024 * 1024)
 
-    with {:ok, files} <- :zip.table(String.to_charlist(path)) do
+    with {:ok, files} <- Shp.unzip_table(path) do
       from_filesystem(
         %Filesystem{
           list: fn -> files end,
           stream: fn file ->
             if !File.exists?(Path.join(cwd, file)) do
               File.mkdir_p!(cwd)
-              unzip!(path, cwd, Keyword.get(opts, :unzip_shell, true))
+              {:ok, _} = Shp.unzip_files(path, cwd)
             end
             open_file(Path.join(cwd, file), size)
           end
@@ -114,7 +107,6 @@ defmodule Exshape do
   def from_filesystem(fs, opts \\ []) do
     filenames = fs.list.()
     |> Enum.filter(&keep_file?/1)
-    |> Enum.map(fn {:zip_file, filename, _, _, _, _} -> filename end)
 
     filenames
     |> Enum.group_by(&Path.rootname/1)
@@ -127,9 +119,9 @@ defmodule Exshape do
       if !is_nil(shp) && !is_nil(dbf) do
         [{
           root,
-          List.to_string(shp),
-          List.to_string(dbf),
-          prj && List.to_string(prj)
+          shp,
+          dbf,
+          prj
           }]
       else
         []
