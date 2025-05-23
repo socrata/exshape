@@ -13,6 +13,7 @@ mod point;
 mod lineseg;
 mod ring;
 mod poly;
+mod zip;
 
 use ring::{ElixirRing, Ring};
 use poly::{ElixirPoly, Poly};
