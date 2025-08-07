@@ -110,7 +110,7 @@ impl <'a> Ring<'a> {
         area >= 0.0
     }
 
-    fn slices(&self) -> Ref<Slices> {
+    fn slices(&self) -> Ref<'_, Slices> {
         let mut slices = self.slices.borrow();
         if slices.is_none() {
             drop(slices);
@@ -120,7 +120,7 @@ impl <'a> Ring<'a> {
         Ref::map(slices, |t| t.as_ref().unwrap())
     }
 
-    fn slice_for(&self, pt: &Point) -> Option<Ref<Vec<LineSeg>>> {
+    fn slice_for(&self, pt: &Point) -> Option<Ref<'_, Vec<LineSeg>>> {
         let slices = self.slices();
         if pt.y < slices.y_min || pt.y > slices.y_max {
             None
@@ -198,8 +198,8 @@ fn slice(points: &Vec<Point>) -> Slices {
         let min_seg = a_seg.min(b_seg);
         let max_seg = a_seg.max(b_seg);
 
-        for seg in min_seg..=max_seg {
-            segments[seg].push(LineSeg { a, b });
+        for seg in &mut segments[min_seg..=max_seg] {
+            seg.push(LineSeg { a, b });
         }
     }
 
