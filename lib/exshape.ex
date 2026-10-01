@@ -91,7 +91,7 @@ defmodule Exshape do
   @spec from_zip(String.t) :: [layer]
   def from_zip(path, opts \\ []) do
 
-    cwd = Keyword.get(opts, :working_dir, '/tmp/exshape_#{random_string()}')
+    cwd = Keyword.get(opts, :working_dir, ~c"/tmp/exshape_#{random_string()}")
     size = Keyword.get(opts, :read_size, 1024 * 1024)
 
     with {:ok, files} <- :zip.table(String.to_charlist(path)) do
